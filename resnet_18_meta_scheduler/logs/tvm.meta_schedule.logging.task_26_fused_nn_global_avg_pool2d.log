@@ -1,0 +1,734 @@
+2023-11-10 23:34:23 [INFO] [task_scheduler.cc:160] Initializing Task #26: "fused_nn_global_avg_pool2d"
+2023-11-10 23:34:23 [INFO] [task_scheduler.cc:35] 
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(p0: T.Buffer((T.int64(1), T.int64(512), T.int64(7), T.int64(7)), "float32"), adaptive_pool_avg: T.Buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)), "float32")):
+        T.func_attr({"tir.noalias": T.bool(True)})
+        # with T.block("root"):
+        adaptive_pool_sum = T.alloc_buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)))
+        for ax0, ax1, ax2, ax3, rv0, rv1 in T.grid(T.int64(1), T.int64(512), T.int64(1), T.int64(1), T.int64(7), T.int64(7)):
+            with T.block("adaptive_pool_sum"):
+                v_ax0, v_ax1, v_ax2, v_ax3, v_rv0, v_rv1 = T.axis.remap("SSSSRR", [ax0, ax1, ax2, ax3, rv0, rv1])
+                T.reads(p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1])
+                T.writes(adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3])
+                with T.init():
+                    adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] = T.float32(0)
+                adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] + p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1]
+        for ax0, ax1, ax2, ax3 in T.grid(T.int64(1), T.int64(512), T.int64(1), T.int64(1)):
+            with T.block("adaptive_pool_avg"):
+                v_ax0, v_ax1, v_ax2, v_ax3 = T.axis.remap("SSSS", [ax0, ax1, ax2, ax3])
+                T.reads(adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3])
+                T.writes(adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3])
+                T.block_attr({"schedule_rule": "meta_schedule.adaptive_pool_avg"})
+                adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] * T.float32(0.020408163265306121)
+2023-11-10 23:34:23 [INFO] [task_scheduler.cc:164] Total 2 design space(s) generated
+2023-11-10 23:34:23 [INFO] [task_scheduler.cc:170] Design space #0:
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(p0: T.Buffer((T.int64(1), T.int64(512), T.int64(7), T.int64(7)), "float32"), adaptive_pool_avg: T.Buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)), "float32")):
+        T.func_attr({"tir.noalias": T.bool(True)})
+        with T.block("root"):
+            T.reads()
+            T.writes()
+            T.block_attr({"meta_schedule.unroll_explicit": 64})
+            adaptive_pool_sum = T.alloc_buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)))
+            for ax0_ax1_ax2_ax3_fused_0 in T.thread_binding(T.int64(16), thread="blockIdx.x"):
+                for ax0_ax1_ax2_ax3_fused_1 in T.thread_binding(T.int64(32), thread="threadIdx.x"):
+                    for rv0, rv1 in T.grid(T.int64(7), T.int64(7)):
+                        with T.block("adaptive_pool_sum"):
+                            v_ax0 = T.axis.spatial(T.int64(1), T.int64(0))
+                            v_ax1 = T.axis.spatial(T.int64(512), ax0_ax1_ax2_ax3_fused_0 * T.int64(32) + ax0_ax1_ax2_ax3_fused_1)
+                            v_ax2 = T.axis.spatial(T.int64(1), T.int64(0))
+                            v_ax3 = T.axis.spatial(T.int64(1), T.int64(0))
+                            v_rv0, v_rv1 = T.axis.remap("RR", [rv0, rv1])
+                            T.reads(p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1])
+                            T.writes(adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3])
+                            with T.init():
+                                adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] = T.float32(0)
+                            adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] + p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1]
+            for ax0_ax1_ax2_ax3_fused_0 in T.thread_binding(T.int64(1), thread="blockIdx.x"):
+                for ax0_ax1_ax2_ax3_fused_1 in T.thread_binding(T.int64(512), thread="threadIdx.x"):
+                    with T.block("adaptive_pool_avg"):
+                        v_ax0 = T.axis.spatial(T.int64(1), T.int64(0))
+                        v_ax1 = T.axis.spatial(T.int64(512), ax0_ax1_ax2_ax3_fused_0 * T.int64(512) + ax0_ax1_ax2_ax3_fused_1)
+                        v_ax2 = T.axis.spatial(T.int64(1), T.int64(0))
+                        v_ax3 = T.axis.spatial(T.int64(1), T.int64(0))
+                        T.reads(adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3])
+                        T.writes(adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3])
+                        adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum[v_ax0, v_ax1, v_ax2, v_ax3] * T.float32(0.020408163265306121)
+b0 = sch.get_block(name="adaptive_pool_sum", func_name="main")
+b1 = sch.get_block(name="adaptive_pool_avg", func_name="main")
+b2 = sch.get_block(name="root", func_name="main")
+sch.unannotate(block_or_loop=b1, ann_key="schedule_rule")
+v3 = sch.sample_categorical(candidates=[0, 16, 64, 512, 1024], probs=[0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001], decision=2)
+sch.annotate(block_or_loop=b2, ann_key="meta_schedule.unroll_explicit", ann_val=v3)
+l4, l5, l6, l7 = sch.get_loops(block=b1)
+l8 = sch.fuse(l4, l5, l6, l7, preserve_unit_iters=True)
+v9 = sch.sample_categorical(candidates=[32, 64, 128, 256, 512], probs=[0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001], decision=4)
+l10, l11 = sch.split(loop=l8, factors=[None, v9], preserve_unit_iters=True)
+sch.bind(loop=l10, thread_axis="blockIdx.x")
+sch.bind(loop=l11, thread_axis="threadIdx.x")
+l12, l13, l14, l15, l16, l17 = sch.get_loops(block=b0)
+l18 = sch.fuse(l12, l13, l14, l15, preserve_unit_iters=True)
+v19 = sch.sample_categorical(candidates=[32, 64, 128, 256, 512], probs=[0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001], decision=0)
+l20, l21 = sch.split(loop=l18, factors=[None, v19], preserve_unit_iters=True)
+sch.bind(loop=l20, thread_axis="blockIdx.x")
+sch.bind(loop=l21, thread_axis="threadIdx.x")
+2023-11-10 23:34:23 [INFO] [task_scheduler.cc:170] Design space #1:
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(p0: T.Buffer((T.int64(1), T.int64(512), T.int64(7), T.int64(7)), "float32"), adaptive_pool_avg: T.Buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)), "float32")):
+        T.func_attr({"tir.noalias": T.bool(True)})
+        with T.block("root"):
+            T.reads()
+            T.writes()
+            T.block_attr({"meta_schedule.unroll_explicit": 0})
+            adaptive_pool_sum_shared = T.alloc_buffer((T.int64(1), T.int64(512), T.int64(1), T.int64(1)), scope="shared")
+            for ax0_ax1_ax2_ax3_0_fused in T.thread_binding(T.int64(512), thread="blockIdx.x"):
+                for ax0, ax1, ax2, ax3, ax4_ax5_fused_0 in T.grid(T.int64(1), T.int64(1), T.int64(1), T.int64(1), T.int64(1)):
+                    for ax4_ax5_fused_1 in T.thread_binding(T.int64(256), thread="threadIdx.x"):
+                        with T.block("adaptive_pool_sum"):
+                            v_ax0 = T.axis.spatial(T.int64(1), ax0)
+                            v_ax1 = T.axis.spatial(T.int64(512), ax0_ax1_ax2_ax3_0_fused + ax1)
+                            v_ax2, v_ax3 = T.axis.remap("SS", [ax2, ax3])
+                            v_rv0 = T.axis.reduce(T.int64(7), (ax4_ax5_fused_0 * T.int64(256) + ax4_ax5_fused_1) // T.int64(7))
+                            v_rv1 = T.axis.reduce(T.int64(7), (ax4_ax5_fused_0 * T.int64(256) + ax4_ax5_fused_1) % T.int64(7))
+                            T.where(ax4_ax5_fused_0 * T.int64(256) + ax4_ax5_fused_1 < T.int64(49))
+                            T.reads(p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1])
+                            T.writes(adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3])
+                            with T.init():
+                                adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3] = T.float32(0)
+                            adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3] + p0[v_ax0, v_ax1, v_ax2 * T.int64(7) + v_rv0, v_ax3 * T.int64(7) + v_rv1]
+                for ax3_1 in T.thread_binding(T.int64(256), thread="threadIdx.x"):
+                    with T.block("adaptive_pool_avg"):
+                        v_ax0 = T.axis.spatial(T.int64(1), T.int64(0))
+                        v_ax1 = T.axis.spatial(T.int64(512), ax0_ax1_ax2_ax3_0_fused)
+                        v_ax2 = T.axis.spatial(T.int64(1), T.int64(0))
+                        v_ax3 = T.axis.spatial(T.int64(1), ax3_1)
+                        T.where(T.Mul(T.int64(0), T.int64(256)) + ax3_1 < T.int64(1))
+                        T.reads(adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3])
+                        T.writes(adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3])
+                        adaptive_pool_avg[v_ax0, v_ax1, v_ax2, v_ax3] = adaptive_pool_sum_shared[v_ax0, v_ax1, v_ax2, v_ax3] * T.float32(0.020408163265306121)
+b0 = sch.get_block(name="adaptive_pool_sum", func_name="main")
+b1 = sch.get_block(name="adaptive_pool_avg", func_name="main")
+b2 = sch.get_block(name="root", func_name="main")
+sch.unannotate(block_or_loop=b1, ann_key="schedule_rule")
+b3, = sch.get_consumers(block=b0)
+l4, l5, l6, l7 = sch.get_loops(block=b3)
+v8 = sch.sample_categorical(candidates=[4, 8, 16, 32, 64, 128, 256, 512], probs=[0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125], decision=6)
+l9, l10 = sch.split(loop=l7, factors=[None, v8], preserve_unit_iters=True)
+sch.bind(loop=l10, thread_axis="threadIdx.x")
+sch.compute_at(block=b0, loop=l9, preserve_unit_loops=True, index=-1)
+sch.set_scope(block=b0, buffer_index=0, storage_scope="shared")
+l11, l12, l13, l14, l15, l16, l17, l18, l19, l20 = sch.get_loops(block=b0)
+l21 = sch.fuse(l19, l20, preserve_unit_iters=True)
+l22, l23 = sch.split(loop=l21, factors=[None, v8], preserve_unit_iters=True)
+sch.bind(loop=l23, thread_axis="threadIdx.x")
+v24 = sch.sample_categorical(candidates=[0, 16, 64, 512, 1024], probs=[0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001], decision=0)
+sch.annotate(block_or_loop=b2, ann_key="meta_schedule.unroll_explicit", ann_val=v24)
+l25, l26, l27, l28, l29 = sch.get_loops(block=b1)
+l30 = sch.fuse(l25, l26, l27, l28, preserve_unit_iters=True)
+sch.bind(loop=l30, thread_axis="blockIdx.x")
+2023-11-11 00:15:17 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 00:15:17 [INFO] [evolutionary_search.cc:715] Picked top 0 candidate(s) from database
+2023-11-11 00:15:18 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 00:15:18 [INFO] [evolutionary_search.cc:723] Sampled 512 candidate(s)
+2023-11-11 00:15:18 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 00:15:18 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 00:15:19 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 00:15:19 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 00:15:19 [INFO] [evolutionary_search.cc:649] Scores of the best 64 candidates:
+[1 : 16]:	0.9806  0.9699  0.9650  0.9646  0.9504  0.9354  0.9343  0.9319  0.9272  0.9109  0.9044  0.8967  0.8929  0.8827  0.8674  0.8538
+[17 : 32]:	0.8492  0.8472  0.8391  0.8386  0.8381  0.8330  0.8247  0.8245  0.8216  0.8166  0.8105  0.7990  0.7943  0.7903  0.7892  0.7800
+[33 : 48]:	0.7786  0.7783  0.7732  0.7690  0.7612  0.7588  0.7561  0.7485  0.7445  0.7421  0.7383  0.7378  0.7318  0.7311  0.7293  0.7293
+[49 : 64]:	0.7230  0.7199  0.7163  0.7118  0.7030  0.7022  0.6980  0.6961  0.6943  0.6942  0.6934  0.6897  0.6884  0.6814  0.6770  0.6694
+2023-11-11 00:15:19 [INFO] [evolutionary_search.cc:727] Got 64 candidate(s) with evolutionary search
+2023-11-11 00:15:19 [INFO] [evolutionary_search.cc:730] Sending 63 candidates(s) for measurement
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #1: GFLOPs: 7.3718. Time: 3.4727 us. Best GFLOPs: 7.3718
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #2: GFLOPs: 3.7577. Time: 6.8127 us. Best GFLOPs: 7.3718
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #3: GFLOPs: 4.4325. Time: 5.7755 us. Best GFLOPs: 7.3718
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #4: GFLOPs: 7.3754. Time: 3.4710 us. Best GFLOPs: 7.3754
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #5: GFLOPs: 3.7280. Time: 6.8669 us. Best GFLOPs: 7.3754
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #6: GFLOPs: 4.0314. Time: 6.3502 us. Best GFLOPs: 7.3754
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #7: GFLOPs: 3.2286. Time: 7.9292 us. Best GFLOPs: 7.3754
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #8: GFLOPs: 7.5050. Time: 3.4111 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #9: GFLOPs: 7.3734. Time: 3.4719 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #10: GFLOPs: 4.8638. Time: 5.2634 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #11: GFLOPs: 2.2828. Time: 11.2142 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #12: GFLOPs: 4.3713. Time: 5.8564 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #13: GFLOPs: 2.3276. Time: 10.9984 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #14: GFLOPs: 4.3846. Time: 5.8386 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #15: GFLOPs: 4.4327. Time: 5.7752 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #16: GFLOPs: 3.7088. Time: 6.9026 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #17: GFLOPs: 7.3763. Time: 3.4706 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #18: GFLOPs: 3.0407. Time: 8.4191 us. Best GFLOPs: 7.5050
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #19: GFLOPs: 7.5179. Time: 3.4052 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #20: GFLOPs: 3.0310. Time: 8.4461 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #21: GFLOPs: 7.3762. Time: 3.4706 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #22: GFLOPs: 2.4632. Time: 10.3930 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #23: GFLOPs: 3.7072. Time: 6.9054 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #24: GFLOPs: 4.4323. Time: 5.7758 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #25: GFLOPs: 3.7072. Time: 6.9054 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #26: GFLOPs: 4.1133. Time: 6.2236 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #27: GFLOPs: 3.0366. Time: 8.4304 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #28: GFLOPs: 4.0711. Time: 6.2882 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #29: GFLOPs: 3.0183. Time: 8.4817 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #30: GFLOPs: 4.1056. Time: 6.2354 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #31: GFLOPs: 2.3482. Time: 10.9019 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #32: GFLOPs: 3.7064. Time: 6.9069 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #33: GFLOPs: 6.3001. Time: 4.0634 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #34: GFLOPs: 4.2829. Time: 5.9773 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #35: GFLOPs: 4.0711. Time: 6.2883 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #36: GFLOPs: 2.3482. Time: 10.9018 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #37: GFLOPs: 2.4639. Time: 10.3901 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #38: GFLOPs: 7.3787. Time: 3.4694 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #39: GFLOPs: 3.6660. Time: 6.9831 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #40: GFLOPs: 7.3725. Time: 3.4724 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #41: GFLOPs: 4.4632. Time: 5.7358 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #42: GFLOPs: 3.7059. Time: 6.9079 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #43: GFLOPs: 4.4327. Time: 5.7753 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #44: GFLOPs: 7.5178. Time: 3.4053 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #45: GFLOPs: 7.3757. Time: 3.4709 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #46: GFLOPs: 7.5177. Time: 3.4053 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #47: GFLOPs: 7.3721. Time: 3.4725 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #48: GFLOPs: 4.8637. Time: 5.2635 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #49: GFLOPs: 3.2285. Time: 7.9293 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #50: GFLOPs: 2.3482. Time: 10.9018 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #51: GFLOPs: 4.1138. Time: 6.2230 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #52: GFLOPs: 4.1568. Time: 6.1585 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #53: GFLOPs: 4.8639. Time: 5.2633 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #54: GFLOPs: 2.2805. Time: 11.2256 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #55: GFLOPs: 7.3749. Time: 3.4712 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #56: GFLOPs: 4.2838. Time: 5.9761 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #57: GFLOPs: 3.9177. Time: 6.5344 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #58: GFLOPs: 2.2975. Time: 11.1427 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #59: GFLOPs: 3.7571. Time: 6.8138 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #60: GFLOPs: 2.3482. Time: 10.9018 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #61: GFLOPs: 2.3482. Time: 10.9020 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #62: GFLOPs: 7.5060. Time: 3.4106 us. Best GFLOPs: 7.5179
+2023-11-11 00:30:46 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #63: GFLOPs: 2.4636. Time: 10.3912 us. Best GFLOPs: 7.5179
+2023-11-11 06:19:58 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 06:19:58 [INFO] [evolutionary_search.cc:715] Picked top 63 candidate(s) from database
+2023-11-11 06:19:58 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 06:19:58 [INFO] [evolutionary_search.cc:723] Sampled 449 candidate(s)
+2023-11-11 06:19:59 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 06:20:00 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 06:20:01 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 06:20:01 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 06:20:02 [INFO] [evolutionary_search.cc:649] Scores of the best 64 candidates:
+[1 : 16]:	1.0182  1.0039  1.0025  1.0024  0.9986  0.9985  0.9981  0.9950  0.9950  0.9929  0.9876  0.9826  0.9818  0.9803  0.9792  0.9789
+[17 : 32]:	0.9674  0.9670  0.9544  0.9531  0.8704  0.8654  0.8486  0.8095  0.6066  0.6029  0.5923  0.5917  0.5911  0.5899  0.5893  0.5882
+[33 : 48]:	0.5864  0.5862  0.5771  0.5730  0.5724  0.5669  0.5656  0.5636  0.5620  0.5602  0.5428  0.5408  0.5361  0.5349  0.5344  0.5335
+[49 : 64]:	0.5334  0.5333  0.5322  0.5320  0.5315  0.5304  0.5303  0.5302  0.5300  0.5295  0.5091  0.5079  0.5061  0.5059  0.4951  0.4947
+2023-11-11 06:20:02 [INFO] [evolutionary_search.cc:727] Got 64 candidate(s) with evolutionary search
+2023-11-11 06:20:02 [INFO] [evolutionary_search.cc:730] Sending 61 candidates(s) for measurement
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #64: GFLOPs: 7.4461. Time: 3.4380 us. Best GFLOPs: 7.5179
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #65: GFLOPs: 8.0221. Time: 3.1912 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #66: GFLOPs: 8.0196. Time: 3.1922 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #67: GFLOPs: 7.8658. Time: 3.2546 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #68: GFLOPs: 8.0115. Time: 3.1954 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #69: GFLOPs: 7.8615. Time: 3.2564 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #70: GFLOPs: 8.0195. Time: 3.1922 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #71: GFLOPs: 8.0105. Time: 3.1958 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #72: GFLOPs: 8.0116. Time: 3.1954 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #73: GFLOPs: 8.0114. Time: 3.1954 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #74: GFLOPs: 7.4175. Time: 3.4513 us. Best GFLOPs: 8.0221
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #75: GFLOPs: 8.1020. Time: 3.1597 us. Best GFLOPs: 8.1020
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #76: GFLOPs: 8.0171. Time: 3.1932 us. Best GFLOPs: 8.1020
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #77: GFLOPs: 8.1056. Time: 3.1583 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #78: GFLOPs: 7.4473. Time: 3.4375 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #79: GFLOPs: 8.0617. Time: 3.1755 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #80: GFLOPs: 7.9969. Time: 3.2012 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #81: GFLOPs: 7.3418. Time: 3.4869 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #82: GFLOPs: 8.0193. Time: 3.1923 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #83: GFLOPs: 7.9651. Time: 3.2140 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #84: GFLOPs: 6.6086. Time: 3.8737 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #85: GFLOPs: 6.6094. Time: 3.8733 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #86: GFLOPs: 6.6084. Time: 3.8738 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #87: GFLOPs: 6.6087. Time: 3.8737 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #88: GFLOPs: 4.6171. Time: 5.5446 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #89: GFLOPs: 4.6884. Time: 5.4603 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #90: GFLOPs: 4.2849. Time: 5.9744 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #91: GFLOPs: 4.4462. Time: 5.7577 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #92: GFLOPs: 4.4500. Time: 5.7528 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #93: GFLOPs: 4.3225. Time: 5.9226 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #94: GFLOPs: 4.2772. Time: 5.9852 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #95: GFLOPs: 4.4484. Time: 5.7549 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #96: GFLOPs: 4.2635. Time: 6.0045 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #97: GFLOPs: 4.3305. Time: 5.9115 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #98: GFLOPs: 4.4198. Time: 5.7921 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #99: GFLOPs: 4.4194. Time: 5.7926 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #100: GFLOPs: 4.4195. Time: 5.7926 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #101: GFLOPs: 4.3198. Time: 5.9263 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #102: GFLOPs: 4.4477. Time: 5.7557 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #103: GFLOPs: 4.3398. Time: 5.8989 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #104: GFLOPs: 4.4450. Time: 5.7593 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #105: GFLOPs: 4.3008. Time: 5.9524 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #106: GFLOPs: 4.1687. Time: 6.1409 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #107: GFLOPs: 4.3146. Time: 5.9334 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #108: GFLOPs: 3.9551. Time: 6.4727 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #109: GFLOPs: 3.9557. Time: 6.4717 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #110: GFLOPs: 4.1144. Time: 6.2220 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #111: GFLOPs: 3.9555. Time: 6.4720 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #112: GFLOPs: 4.1651. Time: 6.1462 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #113: GFLOPs: 4.1638. Time: 6.1482 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #114: GFLOPs: 4.1676. Time: 6.1427 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #115: GFLOPs: 4.1588. Time: 6.1557 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #116: GFLOPs: 4.1688. Time: 6.1408 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #117: GFLOPs: 4.1125. Time: 6.2250 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #118: GFLOPs: 4.1127. Time: 6.2247 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #119: GFLOPs: 4.3144. Time: 5.9336 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #120: GFLOPs: 4.3145. Time: 5.9335 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #121: GFLOPs: 4.3144. Time: 5.9336 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #122: GFLOPs: 3.8738. Time: 6.6085 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #123: GFLOPs: 3.7022. Time: 6.9148 us. Best GFLOPs: 8.1056
+2023-11-11 06:20:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #124: GFLOPs: 3.8749. Time: 6.6065 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:13 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 10:58:13 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 10:58:13 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 10:58:13 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 10:58:14 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 10:58:15 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 10:58:16 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 10:58:16 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 10:58:17 [INFO] [evolutionary_search.cc:649] Scores of the best 39 candidates:
+[1 : 16]:	0.5124  0.4697  0.4661  0.4658  0.4654  0.4648  0.4633  0.4594  0.4572  0.4397  0.4319  0.4281  0.4085  0.4059  0.4049  0.4008
+[17 : 32]:	0.3982  0.3972  0.3969  0.3965  0.3961  0.3952  0.3951  0.3943  0.3933  0.3927  0.3581  0.3270  0.3247  0.3244  0.3234  0.3145
+[33 : 39]:	0.3058  0.3032  0.2811  0.2800  0.2777  0.2774  0.2757
+2023-11-11 10:58:17 [INFO] [evolutionary_search.cc:727] Got 39 candidate(s) with evolutionary search
+2023-11-11 10:58:17 [INFO] [evolutionary_search.cc:730] Sending 39 candidates(s) for measurement
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #125: GFLOPs: 3.9532. Time: 6.4758 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #126: GFLOPs: 3.5368. Time: 7.2382 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #127: GFLOPs: 3.5366. Time: 7.2385 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #128: GFLOPs: 3.6966. Time: 6.9252 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #129: GFLOPs: 3.5342. Time: 7.2435 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #130: GFLOPs: 3.6961. Time: 6.9262 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #131: GFLOPs: 3.6972. Time: 6.9242 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #132: GFLOPs: 3.5339. Time: 7.2442 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #133: GFLOPs: 3.5366. Time: 7.2385 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #134: GFLOPs: 3.2299. Time: 7.9259 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #135: GFLOPs: 3.1730. Time: 8.0682 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #136: GFLOPs: 3.2278. Time: 7.9312 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #137: GFLOPs: 2.9387. Time: 8.7114 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #138: GFLOPs: 2.9486. Time: 8.6821 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #139: GFLOPs: 3.0514. Time: 8.3896 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #140: GFLOPs: 2.9393. Time: 8.7097 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #141: GFLOPs: 2.9464. Time: 8.6886 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #142: GFLOPs: 3.0520. Time: 8.3880 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #143: GFLOPs: 2.9388. Time: 8.7111 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #144: GFLOPs: 2.9417. Time: 8.7026 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #145: GFLOPs: 2.9458. Time: 8.6902 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #146: GFLOPs: 2.9392. Time: 8.7099 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #147: GFLOPs: 3.0511. Time: 8.3905 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #148: GFLOPs: 2.9504. Time: 8.6767 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #149: GFLOPs: 3.0507. Time: 8.3915 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #150: GFLOPs: 2.9507. Time: 8.6758 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #151: GFLOPs: 2.4316. Time: 10.5282 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #152: GFLOPs: 2.2968. Time: 11.1460 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #153: GFLOPs: 2.2995. Time: 11.1331 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #154: GFLOPs: 2.3047. Time: 11.1077 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #155: GFLOPs: 2.3002. Time: 11.1295 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #156: GFLOPs: 2.4044. Time: 10.6471 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #157: GFLOPs: 2.2961. Time: 11.1494 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #158: GFLOPs: 2.3048. Time: 11.1071 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #159: GFLOPs: 2.2994. Time: 11.1333 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #160: GFLOPs: 2.2968. Time: 11.1461 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #161: GFLOPs: 2.2995. Time: 11.1331 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #162: GFLOPs: 2.3049. Time: 11.1070 us. Best GFLOPs: 8.1056
+2023-11-11 10:58:34 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #163: GFLOPs: 2.3003. Time: 11.1290 us. Best GFLOPs: 8.1056
+2023-11-11 11:47:22 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 11:47:22 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 11:47:22 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 11:47:22 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 11:47:23 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 11:47:24 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 11:47:25 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 11:47:25 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 11:47:26 [INFO] [evolutionary_search.cc:649] Scores of the best 2 candidates:
+[1 : 2]:	0.4063  0.3985
+2023-11-11 11:47:26 [INFO] [evolutionary_search.cc:727] Got 2 candidate(s) with evolutionary search
+2023-11-11 11:47:26 [INFO] [evolutionary_search.cc:730] Sending 2 candidates(s) for measurement
+2023-11-11 11:47:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #164: GFLOPs: 3.1405. Time: 8.1515 us. Best GFLOPs: 8.1056
+2023-11-11 11:47:28 [INFO] [task_scheduler.cc:131] [Task #26: fused_nn_global_avg_pool2d] Trial #165: GFLOPs: 3.1403. Time: 8.1522 us. Best GFLOPs: 8.1056
+2023-11-11 12:00:27 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 12:00:27 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 12:00:28 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:00:28 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 12:00:29 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:00:29 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:00:30 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:00:31 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:00:32 [INFO] [evolutionary_search.cc:649] Scores of the best 0 candidates:
+2023-11-11 12:00:32 [INFO] [evolutionary_search.cc:727] Got 0 candidate(s) with evolutionary search
+2023-11-11 12:00:32 [INFO] [evolutionary_search.cc:730] Sending 0 candidates(s) for measurement
+2023-11-11 12:10:35 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 12:10:35 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 12:10:36 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:10:36 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 12:10:36 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:10:37 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:10:38 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:10:39 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:10:39 [INFO] [evolutionary_search.cc:649] Scores of the best 0 candidates:
+2023-11-11 12:10:39 [INFO] [evolutionary_search.cc:727] Got 0 candidate(s) with evolutionary search
+2023-11-11 12:10:39 [INFO] [evolutionary_search.cc:730] Sending 0 candidates(s) for measurement
+2023-11-11 12:14:32 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 12:14:32 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 12:14:32 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:14:32 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 12:14:33 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:14:34 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:14:35 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:14:36 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:14:36 [INFO] [evolutionary_search.cc:649] Scores of the best 0 candidates:
+2023-11-11 12:14:36 [INFO] [evolutionary_search.cc:727] Got 0 candidate(s) with evolutionary search
+2023-11-11 12:14:36 [INFO] [evolutionary_search.cc:730] Sending 0 candidates(s) for measurement
+2023-11-11 12:16:12 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 12:16:12 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 12:16:12 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:12 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 12:16:13 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:14 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:15 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:15 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:16 [INFO] [evolutionary_search.cc:649] Scores of the best 0 candidates:
+2023-11-11 12:16:16 [INFO] [evolutionary_search.cc:727] Got 0 candidate(s) with evolutionary search
+2023-11-11 12:16:16 [INFO] [evolutionary_search.cc:730] Sending 0 candidates(s) for measurement
+2023-11-11 12:16:31 [INFO] [evolutionary_search.cc:713] Generating candidates......
+2023-11-11 12:16:31 [INFO] [evolutionary_search.cc:715] Picked top 102 candidate(s) from database
+2023-11-11 12:16:31 [INFO] [evolutionary_search.cc:533] Sample-Init-Population summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:31 [INFO] [evolutionary_search.cc:723] Sampled 410 candidate(s)
+2023-11-11 12:16:32 [INFO] [evolutionary_search.cc:621] Evolve iter #0 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:33 [INFO] [evolutionary_search.cc:621] Evolve iter #1 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:34 [INFO] [evolutionary_search.cc:621] Evolve iter #2 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:35 [INFO] [evolutionary_search.cc:621] Evolve iter #3 done. Summary:
+Postproc #0 [meta_schedule.DisallowDynamicLoop(0x56310ba18ae8)]: 0 failure(s)
+Postproc #1 [meta_schedule.RewriteCooperativeFetch(0x56310eea19f8)]: 0 failure(s)
+Postproc #2 [meta_schedule.RewriteUnboundBlock(0x56310eeb8208)]: 0 failure(s)
+Postproc #3 [meta_schedule.RewriteParallelVectorizeUnroll(0x56310f7e7bc8)]: 0 failure(s)
+Postproc #4 [meta_schedule.RewriteReductionBlock(0x56310ebc9888)]: 0 failure(s)
+Postproc #5 [meta_schedule.VerifyGPUCode(0x56310eeb91b8)]: 0 failure(s)
+Postproc #6 [meta_schedule.RewriteTensorize(0x56310eeb81d8)]: 0 failure(s)
+2023-11-11 12:16:35 [INFO] [evolutionary_search.cc:649] Scores of the best 0 candidates:
+2023-11-11 12:16:35 [INFO] [evolutionary_search.cc:727] Got 0 candidate(s) with evolutionary search
+2023-11-11 12:16:35 [INFO] [evolutionary_search.cc:730] Sending 0 candidates(s) for measurement
